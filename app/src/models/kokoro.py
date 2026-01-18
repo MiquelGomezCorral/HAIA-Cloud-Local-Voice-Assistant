@@ -10,7 +10,7 @@ from tqdm import tqdm
 from src.config import Configuration
 
 
-def kokoro_generate_audio(text, CONFIG: Configuration, print_output: bool = True):
+def kokoro_generate_audio(text, CONFIG: Configuration, print_output: bool = False):
     """
     Generate audio using Kokoro TTS model and configuration.
     
@@ -31,7 +31,7 @@ def kokoro_generate_audio(text, CONFIG: Configuration, print_output: bool = True
     all_audio = []
     for i, (gs, ps, audio) in tqdm(enumerate(generator), desc="Generating audio chunks"):
         if print_output:
-            print(f"Chunk {i}: {gs}")
+            print(f" - Chunk {i}: {gs}")
             display(Audio(data=audio, rate=CONFIG.kokoro_rate, autoplay=i==0))
         
         all_audio.append(audio)
@@ -41,7 +41,7 @@ def kokoro_generate_audio(text, CONFIG: Configuration, print_output: bool = True
 
     save_path = os.path.join(
         CONFIG.OUTPUT_PATH, 
-        f'kokoro-{CONFIG.kokoro_voice}-{datetime.today().strftime("%Y-%m-%d")}.wav'
+        f'kokoro-{CONFIG.kokoro_voice}-{os.path.basename(CONFIG.audio_name)}.wav'
     )
     sf.write(save_path, final_audio, CONFIG.kokoro_rate)
 

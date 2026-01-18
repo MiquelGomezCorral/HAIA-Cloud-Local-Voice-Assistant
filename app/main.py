@@ -4,7 +4,7 @@ import dotenv
 import argparse
 
 from maikol_utils.other_utils import args_to_dataclass
-from maikol_utils.print_utils import print_separator
+from maikol_utils.print_utils import print_separator, print_color
 
 from src.config import Configuration
 from src.models import whisper_transcribe, kokoro_generate_audio, ask_rag
@@ -19,7 +19,7 @@ def cmd_read_audio(args: argparse.Namespace):
     
     print_separator("RAG", sep_type="LONG")
     rag_response = ask_rag(transcripcion, CONFIG)
-    print(rag_response)
+    print_color(rag_response, color="green")
 
     print_separator("KOKORO", sep_type="LONG")
     kokoro_generate_audio(rag_response, CONFIG)

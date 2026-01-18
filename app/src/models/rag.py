@@ -7,15 +7,17 @@ from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 
+from maikol_utils.print_utils import print_separator
+
 from src.config import Configuration
 
 def cargar_y_indexar(CONFIG: Configuration):
     embeddings = OllamaEmbeddings(model=CONFIG.rag_embedding_model)
 
     if os.path.exists(CONFIG.db_path):
-        print("--- Cargando base de datos existente... ---")
+        print_separator("Cargando base de datos existente...")
         return Chroma(persist_directory=CONFIG.db_path, embedding_function=embeddings)
-    print(f"--- Escaneando PDFs en {CONFIG.pdf_path} ---")
+    print_separator(f"Escaneando PDFs en {CONFIG.pdf_path}")
     
     # DirectoryLoader busca todos los archivos .pdf y usa PyPDFLoader para cada uno
     loader = DirectoryLoader(
@@ -25,13 +27,13 @@ def cargar_y_indexar(CONFIG: Configuration):
     )
     
     docs = loader.load()
-    print(f"Documentos cargados: {len(docs)} páginas encontradas.")
+    print(f" - Documentos cargados: {len(docs)} páginas encontradas.")
 
     # Dividimos el texto en trozos
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = text_splitter.split_documents(docs)
 
-    print(f"Creando base de datos vectorial con {len(splits)} fragmentos...")
+    print(f" - Creando base de datos vectorial con {len(splits)} fragmentos...")
     vectorstore = Chroma.from_documents(
         documents=splits, 
         embedding=embeddings, 
@@ -45,9 +47,7 @@ def ask_rag(transcription:str, CONFIG:Configuration) -> str:
 
     system_prompt = (
         "Eres un asistente de investigación. Responde basándote estrictamente en el contexto."
-        "IMPORTANTE: Al final de tu respuesta, indica el nombre del archivo y la página de donde "
-        "proviene la información (esta info está en los metadatos 'source' y 'page')."
-        "Además no devuelvas ningún formato, devuelvelo todo en texto plano, como si lo estuvieses leyendo."
+        "Además no devuelvas ningún formato de texto, devuelvelo todo en texto plano, como si lo estuvieses leyendo."
         "\n\n"
         "Contexto: {context}"
     )
@@ -62,7 +62,7 @@ def ask_rag(transcription:str, CONFIG:Configuration) -> str:
         create_stuff_documents_chain(llm, prompt)
     )
 
-    print("Buscando en la biblioteca...")
+    print(" - Buscando en la biblioteca...")
     res = chain.invoke({"input": transcription})
 
     return res["answer"]
