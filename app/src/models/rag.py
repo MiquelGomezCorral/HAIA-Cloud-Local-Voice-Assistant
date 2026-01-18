@@ -11,11 +11,15 @@ from maikol_utils.print_utils import print_separator
 
 from src.config import Configuration
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 def cargar_y_indexar(CONFIG: Configuration):
     embeddings = OllamaEmbeddings(model=CONFIG.rag_embedding_model)
 
     if os.path.exists(CONFIG.db_path):
-        print_separator("Cargando base de datos existente...")
+        print(" - Cargando base de datos existente...")
         return Chroma(persist_directory=CONFIG.db_path, embedding_function=embeddings)
     print_separator(f"Escaneando PDFs en {CONFIG.pdf_path}")
     

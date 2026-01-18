@@ -16,10 +16,16 @@ def cmd_read_audio(args: argparse.Namespace):
     print_separator("FULL PIPELINE STARTED", sep_type="START")
     print_separator("WHISPER", sep_type="LONG")
     transcripcion = whisper_transcribe(CONFIG)
-    
+    if CONFIG.verbose:
+        print_separator("Wihsper trascription")
+        print_color(transcripcion, color="green")
+        
     print_separator("RAG", sep_type="LONG")
     rag_response = ask_rag(transcripcion, CONFIG)
-    print_color(rag_response, color="green")
+
+    if CONFIG.verbose:
+        print_separator("RAG response")
+        print_color(rag_response, color="green")
 
     print_separator("KOKORO", sep_type="LONG")
     kokoro_generate_audio(rag_response, CONFIG)
@@ -66,6 +72,9 @@ if __name__ == "__main__":
     p_full = subparsers.add_parser("full", help="Test script for full pipeline")
     p_full.add_argument(
         "-a", "--audio_name", type=str, required=True, help="Path to the audio file"
+    )
+    p_full.add_argument(
+        "-v", "--verbose", action="store_false", help="Disable verbose output", required=False
     )
     p_full.set_defaults(func=cmd_read_audio)
 

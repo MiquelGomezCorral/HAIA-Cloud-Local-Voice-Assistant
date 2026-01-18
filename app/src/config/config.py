@@ -26,8 +26,11 @@ class Configuration:
     
     kokoro_language: str = "es"
     kokoro_voice: str = "ef_dora"
+    kokoro_repo_id: str = 'hexgrad/Kokoro-82M'    
     kokoro_rate: int = 24000
     kokoro_play_speed: float = 1.0
+
+    verbose: bool = True
 
     def __post_init__(self):
         self.audio_name = os.path.join(self.audio_path, self.audio_name)

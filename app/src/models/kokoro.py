@@ -8,6 +8,9 @@ from datetime import datetime
 from tqdm import tqdm
 
 from src.config import Configuration
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 def kokoro_generate_audio(text, CONFIG: Configuration, print_output: bool = False):
@@ -20,7 +23,7 @@ def kokoro_generate_audio(text, CONFIG: Configuration, print_output: bool = Fals
     :type CONFIG: Configuration
     
     """
-    pipeline = KPipeline(lang_code=CONFIG.kokoro_language)
+    pipeline = KPipeline(lang_code=CONFIG.kokoro_language, repo_id=CONFIG.kokoro_repo_id)
     generator = pipeline(
         text, 
         voice=CONFIG.kokoro_voice,
@@ -44,5 +47,7 @@ def kokoro_generate_audio(text, CONFIG: Configuration, print_output: bool = Fals
         f'kokoro-{CONFIG.kokoro_voice}-{os.path.basename(CONFIG.audio_name)}.wav'
     )
     sf.write(save_path, final_audio, CONFIG.kokoro_rate)
+
+    print(f" - Audio saved at: {save_path}")
 
     return final_audio
