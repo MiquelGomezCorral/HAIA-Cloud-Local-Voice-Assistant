@@ -1,6 +1,7 @@
 import whisper
+from src.config import Configuration
 
-def whisper_transcribe(path:str, whisper_model:str = "medium") -> str:
+def whisper_transcribe(CONFIG: Configuration) -> str:
     """Función para llamar a whisper y transcribir el audio.
 
     Args:
@@ -10,8 +11,8 @@ def whisper_transcribe(path:str, whisper_model:str = "medium") -> str:
     Returns:
         str: Transcripción de whisper.
     """
-    model = whisper.load_model(whisper_model)
+    model = whisper.load_model(CONFIG.whisper_version)
 
-    result = model.transcribe(path)
+    result = model.transcribe(CONFIG.audio_name)
 
     return result["text"]

@@ -3,37 +3,51 @@
 import dotenv
 import argparse
 
-from maikol_utils.other_utils import args_to_config
+from maikol_utils.other_utils import args_to_dataclass
+from maikol_utils.print_utils import print_separator
 
 from src.config import Configuration
 from src.models import whisper_transcribe, kokoro_generate_audio, ask_rag
 
 def cmd_read_audio(args: argparse.Namespace):
     """Call read_extract_from_config_list with the given args."""
-    CONFIG: Configuration = args_to_config(args)
+    CONFIG: Configuration = args_to_dataclass(args, Configuration)
     
+    print_separator("FULL PIPELINE STARTED", sep_type="START")
+    print_separator("WHISPER", sep_type="LONG")
     transcripcion = whisper_transcribe(CONFIG)
+    
+    print_separator("RAG", sep_type="LONG")
     rag_response = ask_rag(transcripcion, CONFIG)
+    print(rag_response)
+
+    print_separator("KOKORO", sep_type="LONG")
     kokoro_generate_audio(rag_response, CONFIG)
 
+    print_separator("FULL PIPELINE ENDED", sep_type="START")
 
 def cmd_whisper(args: argparse.Namespace):
     """Call Whisper function with the given args."""
-    CONFIG: Configuration = args_to_config(args)
+    CONFIG: Configuration = args_to_dataclass(args, Configuration)
+    print_separator("WHISPER STARTED", sep_type="START")
     whisper_transcribe(CONFIG)
+    print_separator("WHISPER ENDED", sep_type="START")
 
 def cmd_rag(args: argparse.Namespace):
     """Call RAG function with the given args."""
-    CONFIG: Configuration = args_to_config(args)
+    print_separator("RAG STARTED", sep_type="START")
+    CONFIG: Configuration = args_to_dataclass(args, Configuration)
     ask_rag(args.query, CONFIG)
+    print_separator("RAG ENDED", sep_type="START")
 
 
 def cmd_kokoro(args: argparse.Namespace):
     """Call Kokoro function with the given args."""
-    CONFIG: Configuration = args_to_config(args)
+    CONFIG: Configuration = args_to_dataclass(args, Configuration)
+    print_separator("KOKORO STARTED", sep_type="START")
     kokoro_generate_audio(args.text, CONFIG)
+    print_separator("KOKORO ENDED", sep_type="START")
     
-
 # ======================================================================================
 #                                       ARGUMENTS
 # ======================================================================================

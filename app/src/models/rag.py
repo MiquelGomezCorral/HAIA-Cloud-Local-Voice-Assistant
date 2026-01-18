@@ -47,6 +47,7 @@ def ask_rag(transcription:str, CONFIG:Configuration) -> str:
         "Eres un asistente de investigación. Responde basándote estrictamente en el contexto."
         "IMPORTANTE: Al final de tu respuesta, indica el nombre del archivo y la página de donde "
         "proviene la información (esta info está en los metadatos 'source' y 'page')."
+        "Además no devuelvas ningún formato, devuelvelo todo en texto plano, como si lo estuvieses leyendo."
         "\n\n"
         "Contexto: {context}"
     )

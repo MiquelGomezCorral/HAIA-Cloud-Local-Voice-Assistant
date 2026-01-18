@@ -1,9 +1,11 @@
 import os
-
+import numpy as np
 from kokoro import KPipeline
 from IPython.display import display, Audio
 import soundfile as sf
 from datetime import datetime
+
+from tqdm import tqdm
 
 from src.config import Configuration
 
@@ -19,28 +21,28 @@ def kokoro_generate_audio(text, CONFIG: Configuration, print_output: bool = True
     
     """
     pipeline = KPipeline(lang_code=CONFIG.kokoro_language)
-
     generator = pipeline(
         text, 
         voice=CONFIG.kokoro_voice,
         speed=CONFIG.kokoro_play_speed,
+        split_pattern=r'\n+'
     )
 
     all_audio = []
-
-    for i, (gs, ps, audio) in enumerate(generator):
+    for i, (gs, ps, audio) in tqdm(enumerate(generator), desc="Generating audio chunks"):
         if print_output:
-            print(i, gs, ps)
+            print(f"Chunk {i}: {gs}")
             display(Audio(data=audio, rate=CONFIG.kokoro_rate, autoplay=i==0))
-
+        
         all_audio.append(audio)
 
-        save_path = os.path.join(
-            CONFIG.OUTPUT_PATH, 
-            f'kokoro-{CONFIG.kokoro_voice}-{CONFIG.kokoro_language}-'
-            f'{datetime.today().strftime("%Y-%m-%d")}.wav'
-        )
-        sf.write(save_path, audio, CONFIG.kokoro_rate)
+    # COMBINE all chunks into one audio stream
+    final_audio = np.concatenate(all_audio)
 
+    save_path = os.path.join(
+        CONFIG.OUTPUT_PATH, 
+        f'kokoro-{CONFIG.kokoro_voice}-{datetime.today().strftime("%Y-%m-%d")}.wav'
+    )
+    sf.write(save_path, final_audio, CONFIG.kokoro_rate)
 
-    return all_audio
+    return final_audio

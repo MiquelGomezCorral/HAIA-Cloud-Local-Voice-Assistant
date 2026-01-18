@@ -13,7 +13,7 @@ class Configuration:
     DATA_PATH: str = os.path.join("..", "data")
     OUTPUT_PATH: str = os.path.join("..", "output")
 
-    audio_path: str = os.path.join(DATA_PATH, "audio")
+    audio_path: str = os.path.join(DATA_PATH, "audios")
     pdf_path: str = os.path.join(DATA_PATH, "pdfs")
     db_path: str = os.path.join(DATA_PATH, "db_data")
 
