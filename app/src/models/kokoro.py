@@ -50,4 +50,4 @@ def kokoro_generate_audio(text, CONFIG: Configuration, print_output: bool = Fals
 
     print(f" - Audio saved at: {save_path}")
 
-    return final_audio
+    return final_audio, save_path

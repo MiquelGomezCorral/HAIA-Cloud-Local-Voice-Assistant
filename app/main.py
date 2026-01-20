@@ -28,9 +28,11 @@ def cmd_read_audio(args: argparse.Namespace):
         print_color(rag_response, color="green")
 
     print_separator("KOKORO", sep_type="LONG")
-    kokoro_generate_audio(rag_response, CONFIG)
-
+    final_audio, save_path = kokoro_generate_audio(rag_response, CONFIG)
     print_separator("FULL PIPELINE ENDED", sep_type="START")
+    
+    return final_audio, save_path
+
 
 def cmd_whisper(args: argparse.Namespace):
     """Call Whisper function with the given args."""
