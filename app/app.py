@@ -1,17 +1,31 @@
-"""Gradio Web UI for the audio pipeline."""
+"""Streamlit Web UI for the audio pipeline.
+
+Run from ./app directory:
+    streamlit run app_streamlit.py
+"""
 
 import os
 import sys
-import gradio as gr
-import dotenv
 import datetime
 import shutil
+import tempfile
+from pathlib import Path
+
+import streamlit as st
+import dotenv
+from audio_recorder_streamlit import audio_recorder
 
 # Import from main.py (same directory)
 from main import cmd_read_audio
 
-# Get paths relative to where the script is launched (from ./app)
-# Config expects to be run from app/ so paths work the same way
+# ======================================================================================
+#                                       PATHS
+# ======================================================================================
+# Paths relative to where the script is launched (from ./app)
+# This matches the Configuration class expectations:
+#   DATA_PATH = os.path.join("..", "data")
+#   OUTPUT_PATH = os.path.join("..", "output")
+
 AUDIO_INPUT_DIR = os.path.abspath(os.path.join("..", "data", "audios"))
 OUTPUT_DIR = os.path.abspath(os.path.join("..", "output"))
 
@@ -19,172 +33,269 @@ OUTPUT_DIR = os.path.abspath(os.path.join("..", "output"))
 os.makedirs(AUDIO_INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-print(f"📁 Current working directory: {os.getcwd()}")
-print(f"📁 Audio input directory: {AUDIO_INPUT_DIR}")
-print(f"📁 Output directory: {OUTPUT_DIR}")
 
-
-def process_audio(audio_input):
-    """Process the recorded audio through the pipeline.
+# ======================================================================================
+#                                       PROCESSING
+# ======================================================================================
+def process_audio(audio_filepath: str) -> tuple[str | None, str]:
+    """Process the audio file through the pipeline.
+    
+    Pipeline: Whisper (transcription) → RAG (response) → Kokoro (audio generation)
     
     Args:
-        audio_input: Audio file path from Gradio
+        audio_filepath: Path to the audio file
         
     Returns:
-        Tuple: (output_audio, status_message, button_state)
+        Tuple: (output_audio_path, status_message)
     """
-    print(f"\n🔍 DEBUG: process_audio called")
-    print(f"🔍 DEBUG: audio_input type: {type(audio_input)}")
-    print(f"🔍 DEBUG: audio_input value: {audio_input}")
+    if not audio_filepath or not os.path.exists(audio_filepath):
+        return None, f"❌ Audio file not found at: {audio_filepath}"
     
-    if audio_input is None:
-        return None, "⚠️ No audio recorded", gr.Button(interactive=False)
+    # Verify file size is reasonable
+    file_size = os.path.getsize(audio_filepath)
+    if file_size == 0:
+        return None, "❌ Audio file is empty"
     
     try:
-        # Handle both string paths and potential tuple (sample_rate, data) formats
-        if isinstance(audio_input, tuple):
-            print(f"🔍 DEBUG: Received tuple - likely (sample_rate, data)")
-            # If it's a tuple, Gradio might have changed - try to get the path from sources
-            return None, "❌ Unexpected audio format (tuple). Please check Gradio audio component settings.", gr.Button(interactive=False)
-        
-        # In Gradio with type="filepath", it should return a string path
-        audio_filepath = str(audio_input) if audio_input else None
-        
-        print(f"🔍 DEBUG: audio_filepath: {audio_filepath}")
-        print(f"🔍 DEBUG: File exists: {os.path.exists(audio_filepath) if audio_filepath else 'N/A'}")
-        
-        if not audio_filepath or not os.path.exists(audio_filepath):
-            return None, f"❌ Audio file not found at: {audio_filepath}", gr.Button(interactive=False)
-        
-        # Wait a moment to ensure the file is fully written (especially for recordings)
-        import time
-        time.sleep(0.1)
-        
-        # Verify file size is reasonable
-        file_size = os.path.getsize(audio_filepath)
-        print(f"🔍 DEBUG: File size: {file_size} bytes")
-        
-        if file_size == 0:
-            return None, "❌ Audio file is empty", gr.Button(interactive=False)
-        
-        # Copy the file to our data/audios directory with a proper name
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"recording_{timestamp}.wav"
-        target_path = os.path.join(AUDIO_INPUT_DIR, filename)
-        
-        shutil.copy2(audio_filepath, target_path)
-        print(f"✅ Audio copied to: {target_path}")
-        
         # Create a minimal args namespace-like object with required configuration
         class Args:
-            def __init__(self, audio_path):
+            def __init__(self, audio_path: str):
                 self.audio_name = audio_path
                 self.verbose = True
                 self.seed = 42
         
-        # Create args object
-        args = Args(target_path)
+        args = Args(audio_filepath)
         
-        print("🚀 Starting pipeline processing...")
         # Run the full pipeline
         final_audio, save_path = cmd_read_audio(args)
         
-        print(f"✅ Pipeline complete. Output: {save_path}")
-        
-        # Return the save path for Gradio to play
-        # If save_path is available, use it; otherwise return final_audio
+        # Return the save path for Streamlit to play
         if save_path and os.path.exists(save_path):
-            return save_path, "✅ Processing complete!", gr.Button(interactive=False)
+            return save_path, "✅ Processing complete!"
         else:
-            return final_audio, "✅ Processing complete!", gr.Button(interactive=False)
+            return final_audio, "✅ Processing complete!"
             
     except Exception as e:
-        error_msg = f"❌ Error: {str(e)}"
-        print(error_msg)
         import traceback
         traceback.print_exc()
-        return None, error_msg, gr.Button(interactive=False)
+        return None, f"❌ Error: {str(e)}"
 
 
-def on_audio_upload(audio_input):
-    """Enable/disable process button based on audio availability."""
-    print(f"\n🔍 DEBUG: on_audio_upload called")
-    print(f"🔍 DEBUG: audio_input type: {type(audio_input)}")
-    print(f"🔍 DEBUG: audio_input value: {audio_input}")
+def save_audio_bytes(audio_bytes: bytes, prefix: str = "recording") -> str:
+    """Save audio bytes to a file in the audio input directory.
     
-    if audio_input is not None:
-        print("✅ Audio detected - enabling button")
-        return gr.Button(interactive=True), "🎤 Audio ready to process"
-    else:
-        print("⚠️ No audio - disabling button")
-        return gr.Button(interactive=False), "⏺️ Record audio first"
-
-
-def create_ui():
-    """Create and configure the Gradio interface."""
+    Args:
+        audio_bytes: Raw audio bytes
+        prefix: Filename prefix
+        
+    Returns:
+        Path to the saved audio file
+    """
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{prefix}_{timestamp}.wav"
+    target_path = os.path.join(AUDIO_INPUT_DIR, filename)
     
-    with gr.Blocks(title="Audio Pipeline") as demo:
-        gr.Markdown("# 🎙️ Audio Processing Pipeline")
-        gr.Markdown("**Whisper** (transcription) → **RAG** (response) → **Kokoro** (audio generation)")
-        gr.Markdown("---")
-        gr.Markdown("🎤 **Step 1:** Click the microphone icon to record, or upload an audio file")
-        gr.Markdown("🚀 **Step 2:** After stopping the recording, click 'Process Audio' to run the pipeline")
-        
-        with gr.Row():
-            with gr.Column():
-                audio_input = gr.Audio(
-                    label="🎤 Record or Upload Audio",
-                    type="filepath",
-                    sources=["microphone", "upload"],
-                    show_label=True
-                )
-                status_text = gr.Textbox(
-                    label="Status",
-                    value="⏺️ Record or upload audio first",
-                    interactive=False
-                )
-                process_btn = gr.Button(
-                    "🚀 Process Audio",
-                    variant="primary"
-                )
-            
-            with gr.Column():
-                audio_output = gr.Audio(
-                    label="🔊 Output Audio"
-                )
-        
-        # Enable button when audio is uploaded/recorded
-        audio_input.upload(
-            fn=on_audio_upload,
-            inputs=audio_input,
-            outputs=[process_btn, status_text]
-        )
-        
-        audio_input.stop_recording(
-            fn=on_audio_upload,
-            inputs=audio_input,
-            outputs=[process_btn, status_text]
-        )
-        
-        # Process audio when button is clicked
-        process_btn.click(
-            fn=process_audio,
-            inputs=audio_input,
-            outputs=[audio_output, status_text, process_btn]
-        )
+    with open(target_path, "wb") as f:
+        f.write(audio_bytes)
     
-    return demo
+    return target_path
 
 
-if __name__ == "__main__":
+# ======================================================================================
+#                                       UI
+# ======================================================================================
+def main():
+    """Main Streamlit application."""
+    
     # Load environment variables
     dotenv.load_dotenv()
     
-    # Create and launch the interface
-    demo = create_ui()
-    demo.launch(
-        share=False, 
-        server_name="0.0.0.0", 
-        server_port=7860,
-        allowed_paths=[OUTPUT_DIR, AUDIO_INPUT_DIR]
+    # Page configuration
+    st.set_page_config(
+        page_title="Audio Processing Pipeline",
+        page_icon="🎙️",
+        layout="wide"
     )
+    
+    # Header
+    st.title("🎙️ Audio Processing Pipeline")
+    st.markdown("""
+    **Whisper** (transcription) → **RAG** (response) → **Kokoro** (audio generation)
+    """)
+    st.divider()
+    
+    # Initialize session state
+    if "audio_path" not in st.session_state:
+        st.session_state.audio_path = None
+    if "output_audio_path" not in st.session_state:
+        st.session_state.output_audio_path = None
+    if "status_message" not in st.session_state:
+        st.session_state.status_message = ""
+    if "processing" not in st.session_state:
+        st.session_state.processing = False
+    
+    # Two-column layout
+    col_input, col_output = st.columns(2)
+    
+    # ==========================================================================
+    #                              INPUT COLUMN
+    # ==========================================================================
+    with col_input:
+        st.subheader("📥 Input Audio")
+        
+        # Tab selection for input method
+        tab_record, tab_upload = st.tabs(["🎤 Record Audio", "📁 Upload File"])
+        
+        # --- RECORD TAB ---
+        with tab_record:
+            st.markdown("Click the microphone to start/stop recording:")
+            
+            # Audio recorder widget
+            audio_bytes = audio_recorder(
+                text="",
+                recording_color="#e74c3c",
+                neutral_color="#3498db",
+                icon_name="microphone",
+                icon_size="3x",
+                pause_threshold=3.0,  # seconds of silence before auto-stop
+                sample_rate=16000
+            )
+            
+            if audio_bytes:
+                st.audio(audio_bytes, format="audio/wav")
+                
+                # Save recorded audio
+                if st.button("✅ Use This Recording", key="use_recording", type="primary"):
+                    audio_path = save_audio_bytes(audio_bytes, prefix="recording")
+                    st.session_state.audio_path = audio_path
+                    st.session_state.output_audio_path = None
+                    st.session_state.status_message = f"📁 Audio saved: `{os.path.basename(audio_path)}`"
+                    st.rerun()
+        
+        # --- UPLOAD TAB ---
+        with tab_upload:
+            st.markdown("Upload an audio file (WAV, MP3, OGG, FLAC):")
+            
+            uploaded_file = st.file_uploader(
+                "Choose an audio file",
+                type=["wav", "mp3", "ogg", "flac", "m4a"],
+                key="audio_uploader",
+                label_visibility="collapsed"
+            )
+            
+            if uploaded_file is not None:
+                st.audio(uploaded_file, format=f"audio/{uploaded_file.type.split('/')[-1]}")
+                
+                if st.button("✅ Use This File", key="use_upload", type="primary"):
+                    # Save uploaded file
+                    audio_bytes = uploaded_file.read()
+                    # Get extension from uploaded file
+                    ext = Path(uploaded_file.name).suffix or ".wav"
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"upload_{timestamp}{ext}"
+                    target_path = os.path.join(AUDIO_INPUT_DIR, filename)
+                    
+                    with open(target_path, "wb") as f:
+                        f.write(audio_bytes)
+                    
+                    st.session_state.audio_path = target_path
+                    st.session_state.output_audio_path = None
+                    st.session_state.status_message = f"📁 Audio saved: `{filename}`"
+                    st.rerun()
+        
+        st.divider()
+        
+        # --- SELECTED AUDIO DISPLAY ---
+        if st.session_state.audio_path:
+            st.success(f"**Selected audio:** `{os.path.basename(st.session_state.audio_path)}`")
+            
+            # Play the selected audio
+            if os.path.exists(st.session_state.audio_path):
+                st.audio(st.session_state.audio_path)
+            
+            # Clear button
+            if st.button("🗑️ Clear Selection", key="clear_audio"):
+                st.session_state.audio_path = None
+                st.session_state.output_audio_path = None
+                st.session_state.status_message = ""
+                st.rerun()
+        
+        st.divider()
+        
+        # --- PROCESS BUTTON ---
+        process_disabled = st.session_state.audio_path is None
+        
+        if st.button(
+            "🚀 Process Audio",
+            key="process_btn",
+            type="primary",
+            disabled=process_disabled,
+            use_container_width=True
+        ):
+            st.session_state.processing = True
+            st.rerun()
+    
+    # ==========================================================================
+    #                              OUTPUT COLUMN
+    # ==========================================================================
+    with col_output:
+        st.subheader("📤 Output Audio")
+        
+        # Status message
+        if st.session_state.status_message:
+            if "✅" in st.session_state.status_message:
+                st.success(st.session_state.status_message)
+            elif "❌" in st.session_state.status_message:
+                st.error(st.session_state.status_message)
+            else:
+                st.info(st.session_state.status_message)
+        
+        # Processing logic (runs after rerun from button click)
+        if st.session_state.processing and st.session_state.audio_path:
+            with st.spinner("🔄 Processing audio through pipeline..."):
+                st.info("**Step 1/3:** Whisper transcription...")
+                st.info("**Step 2/3:** RAG response generation...")
+                st.info("**Step 3/3:** Kokoro audio synthesis...")
+                
+                output_path, status = process_audio(st.session_state.audio_path)
+                
+                st.session_state.output_audio_path = output_path
+                st.session_state.status_message = status
+                st.session_state.processing = False
+                st.rerun()
+        
+        # Display output audio
+        if st.session_state.output_audio_path and os.path.exists(st.session_state.output_audio_path):
+            st.audio(st.session_state.output_audio_path)
+            
+            # Download button
+            with open(st.session_state.output_audio_path, "rb") as f:
+                audio_data = f.read()
+            
+            st.download_button(
+                label="⬇️ Download Output Audio",
+                data=audio_data,
+                file_name=os.path.basename(st.session_state.output_audio_path),
+                mime="audio/wav",
+                use_container_width=True
+            )
+        elif not st.session_state.processing:
+            st.info("🎧 Output audio will appear here after processing.")
+    
+    # ==========================================================================
+    #                              FOOTER / DEBUG INFO
+    # ==========================================================================
+    st.divider()
+    
+    with st.expander("ℹ️ Debug Information"):
+        st.markdown(f"""
+        **Working Directory:** `{os.getcwd()}`  
+        **Audio Input Directory:** `{AUDIO_INPUT_DIR}`  
+        **Output Directory:** `{OUTPUT_DIR}`  
+        **Selected Audio:** `{st.session_state.audio_path or 'None'}`  
+        **Output Audio:** `{st.session_state.output_audio_path or 'None'}`
+        """)
+
+
+if __name__ == "__main__":
+    main()
