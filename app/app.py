@@ -7,28 +7,21 @@ Run from ./app directory:
 import os
 import datetime
 from pathlib import Path
-
 import streamlit as st
 import dotenv
 from audio_recorder_streamlit import audio_recorder
 
-# Import from main.py (same directory)
 from main import cmd_read_audio
+
+from maikol_utils.file_utils import make_dirs
 
 # ======================================================================================
 #                                       PATHS
 # ======================================================================================
-# Paths relative to where the script is launched (from ./app)
-# This matches the Configuration class expectations:
-#   DATA_PATH = os.path.join("..", "data")
-#   OUTPUT_PATH = os.path.join("..", "output")
-
 AUDIO_INPUT_DIR = os.path.abspath(os.path.join("..", "data", "audios"))
 OUTPUT_DIR = os.path.abspath(os.path.join("..", "output"))
 
-# Ensure directories exist
-os.makedirs(AUDIO_INPUT_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+make_dirs([AUDIO_INPUT_DIR, OUTPUT_DIR])
 
 
 # ======================================================================================
@@ -105,25 +98,22 @@ def save_audio_bytes(audio_bytes: bytes, prefix: str = "recording") -> str:
 # ======================================================================================
 def main():
     """Main Streamlit application."""
-    
-    # Load environment variables
     dotenv.load_dotenv()
     
-    # Page configuration
+    # ========================= Page configuration ========================= 
     st.set_page_config(
         page_title="Audio Processing Pipeline",
         page_icon="🎙️",
         layout="wide"
     )
     
-    # Header
     st.title("🎙️ Audio Processing Pipeline")
     st.markdown("""
     **Whisper** (transcription) → **RAG** (response) → **Kokoro** (audio generation)
     """)
     st.divider()
     
-    # Initialize session state
+    # ========================= Initialize session state ========================= 
     if "audio_path" not in st.session_state:
         st.session_state.audio_path = None
     if "output_audio_path" not in st.session_state:
@@ -135,19 +125,18 @@ def main():
     if "tts_model" not in st.session_state:
         st.session_state.tts_model = "kokoro"
     
-    # Two-column layout
+    # ==========================================================================
+    #                              UI LAYOUT
+    # ==========================================================================
     col_input, col_output = st.columns(2)
-    
-    # ==========================================================================
-    #                              INPUT COLUMN
-    # ==========================================================================
+    # ========================= INPUT COLUMN =========================
     with col_input:
         st.subheader("📥 Input Audio")
         
         # Tab selection for input method
         tab_record, tab_upload = st.tabs(["🎤 Record Audio", "📁 Upload File"])
         
-        # --- RECORD TAB ---
+        # ========================= RECORD TAB =========================
         with tab_record:
             st.markdown("Click the microphone to start/stop recording:")
             
@@ -173,7 +162,7 @@ def main():
                     st.session_state.status_message = f"📁 Audio saved: `{os.path.basename(audio_path)}`"
                     st.rerun()
         
-        # --- UPLOAD TAB ---
+        # ========================= UPLOAD TAB =========================
         with tab_upload:
             st.markdown("Upload an audio file (WAV, MP3, OGG, FLAC):")
             
@@ -206,7 +195,7 @@ def main():
         
         st.divider()
         
-        # --- SELECTED AUDIO DISPLAY ---
+        # ========================= SELECTED AUDIO DISPLAY =========================
         if st.session_state.audio_path:
             st.success(f"**Selected audio:** `{os.path.basename(st.session_state.audio_path)}`")
             
@@ -223,7 +212,7 @@ def main():
         
         st.divider()
         
-        # --- TTS MODEL SELECTION ---
+        # ========================= TTS MODEL SELECTION =========================
         st.markdown("**🎵 Select TTS Model:**")
         st.session_state.tts_model = st.selectbox(
             "TTS Model",
@@ -235,7 +224,7 @@ def main():
         
         st.divider()
         
-        # --- PROCESS BUTTON ---
+        # ========================= PROCESS BUTTON =========================
         process_disabled = st.session_state.audio_path is None
         
         if st.button(
