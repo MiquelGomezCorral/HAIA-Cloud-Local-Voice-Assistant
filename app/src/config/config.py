@@ -17,7 +17,7 @@ class Configuration:
     pdf_path: str = os.path.join(DATA_PATH, "pdfs")
     db_path: str = os.path.join(DATA_PATH, "db_data")
 
-    audio_name: str = None
+    audio_name: str = 'sample.wav'  
 
     whisper_version: str = "medium"
 

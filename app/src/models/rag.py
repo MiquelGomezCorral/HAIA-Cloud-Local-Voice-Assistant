@@ -1,4 +1,7 @@
 import os
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
 from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -45,28 +48,59 @@ def cargar_y_indexar(CONFIG: Configuration):
     )
     return vectorstore
 
+def evaluar_relevancia(pregunta, documentos, llm) -> str:
+    """
+    Determina si los documentos recuperados son útiles.
+    """
+    prompt_evaluador = ChatPromptTemplate.from_messages([
+        ("system", "Eres un evaluador de relevancia. Responde estrictamente con una palabra: 'SI' o 'NO'."),
+        ("human", f"Pregunta: {pregunta} \n\n Contexto recuperado: {documentos} \n\n ¿Contiene este contexto la información necesaria para responder?")
+    ])
+    
+    chain = prompt_evaluador | llm | StrOutputParser()
+
+    respuesta = chain.invoke({}).strip().upper()
+    return "SI" in respuesta
+
 def ask_rag(transcription:str, CONFIG:Configuration) -> str:
     vectorstore = cargar_y_indexar(CONFIG)
     llm = OllamaLLM(model=CONFIG.rag_model_name)
+    search_tool = TavilySearchResults(k=5, search_depth="advanced",)
+
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 10})
+    docs_locales = retriever.invoke(transcription)
+    contexto_local = "\n".join([d.page_content for d in docs_locales])
+
+    es_relevante = evaluar_relevancia(transcription, contexto_local, llm)
+
+    if es_relevante:
+        print(" - [OK] Información encontrada en documentos locales.")
+        contexto_final = contexto_local
+        fuente_info = "tus documentos internos"
+    else:
+        print(" - [!] Información local insuficiente o irrelevante. Consultando internet...")
+        web_results = search_tool.invoke({"query": transcription})
+        contexto_final = "\n".join([res["content"] for res in web_results])
+        fuente_info = "fuentes externas en internet"
 
     system_prompt = (
-        "Eres un asistente de investigación. Responde basándote estrictamente en el contexto."
-        "Además no devuelvas ningún formato de texto, devuelvelo todo en texto plano, como si lo estuvieses leyendo."
-        "\n\n"
-        "Contexto: {context}"
+        "Eres un asistente de investigación. Responde de forma natural y fluida. "
+        f"La información proviene de {fuente_info}. "
+        "IMPORTANTE: No uses negritas, ni asteriscos, ni listas, ni ningún formato markdown. "
+        "Escribe todo en un párrafo o párrafos de texto plano, como si fuera una carta o un mensaje de voz."
+        "\n\nContexto: {context}"
     )
 
-    prompt = ChatPromptTemplate.from_messages([
+    prompt_final = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("human", "{input}"),
     ])
+
+    chain_final = prompt_final | llm | StrOutputParser()
     
-    chain = create_retrieval_chain(
-        vectorstore.as_retriever(search_kwargs={"k": 10}), 
-        create_stuff_documents_chain(llm, prompt)
-    )
+    respuesta = chain_final.invoke({
+        "context": contexto_final, 
+        "input": transcription
+    })
 
-    print(" - Buscando en la biblioteca...")
-    res = chain.invoke({"input": transcription})
-
-    return res["answer"]
+    return respuesta

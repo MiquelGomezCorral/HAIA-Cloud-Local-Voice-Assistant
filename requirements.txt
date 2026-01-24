@@ -6,7 +6,11 @@ soundfile
 streamlit>=1.30.0
 audio-recorder-streamlit>=0.0.8
 whisper==1.1.10
+chromadb==1.4.1
+openai-whisper==20250625
 langchain-ollama==1.0.1
 langchain-community==0.4.1
-openai-whisper
-chromadb
+tavily-python==0.7.19
+# transformers 
+# torch 
+# torchaudio

@@ -17,6 +17,7 @@ def cmd_read_audio(args: argparse.Namespace):
     print_separator("WHISPER", sep_type="LONG")
     transcripcion = whisper_transcribe(CONFIG)
     if CONFIG.verbose:
+        # transcripcion="What is TARDIS in Deutsche Telekom?"
         print_separator("Wihsper trascription")
         print_color(transcripcion, color="green")
         
@@ -55,6 +56,13 @@ def cmd_kokoro(args: argparse.Namespace):
     print_separator("KOKORO STARTED", sep_type="START")
     kokoro_generate_audio(args.text, CONFIG)
     print_separator("KOKORO ENDED", sep_type="START")
+
+def cmd_quen3(args: argparse.Namespace):
+    """Call Qwen3 TTS function with the given args."""
+    CONFIG: Configuration = args_to_dataclass(args, Configuration)
+    print_separator("QWEN3 TTS STARTED", sep_type="START")
+    generate_audio(args.text, CONFIG)
+    print_separator("QWEN3 TTS ENDED", sep_type="START")
     
 # ======================================================================================
 #                                       ARGUMENTS
@@ -103,9 +111,18 @@ if __name__ == "__main__":
     # ======================================================================================
     p_kokoro = subparsers.add_parser("kokoro", help="Test script with Kokoro")
     p_kokoro.add_argument(
-        "-text", "--text", type=str, required=True, help="Query to ask the Kokoro system"
+        "-t", "--text", type=str, required=True, help="Query to ask the Kokoro system"
     )
     p_kokoro.set_defaults(func=cmd_kokoro)
+
+    # ======================================================================================
+    #                                       QWEN3 TTS
+    # ======================================================================================
+    p_quen3 = subparsers.add_parser("quen3", help="Test script with Qwen3 TTS")
+    p_quen3.add_argument(
+        "-t", "--text", type=str, required=True, help="Query to ask the Qwen3 TTS system"
+    )
+    p_quen3.set_defaults(func=cmd_quen3)
 
 
     # ======================================================================================
