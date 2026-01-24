@@ -5,10 +5,7 @@ Run from ./app directory:
 """
 
 import os
-import sys
 import datetime
-import shutil
-import tempfile
 from pathlib import Path
 
 import streamlit as st
@@ -37,13 +34,14 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # ======================================================================================
 #                                       PROCESSING
 # ======================================================================================
-def process_audio(audio_filepath: str) -> tuple[str | None, str]:
+def process_audio(audio_filepath: str, tts_model: str = "kokoro") -> tuple[str | None, str]:
     """Process the audio file through the pipeline.
     
-    Pipeline: Whisper (transcription) → RAG (response) → Kokoro (audio generation)
+    Pipeline: Whisper (transcription) → RAG (response) → TTS (audio generation)
     
     Args:
         audio_filepath: Path to the audio file
+        tts_model: TTS model to use ("kokoro" or "qwen3")
         
     Returns:
         Tuple: (output_audio_path, status_message)
@@ -59,12 +57,13 @@ def process_audio(audio_filepath: str) -> tuple[str | None, str]:
     try:
         # Create a minimal args namespace-like object with required configuration
         class Args:
-            def __init__(self, audio_path: str):
+            def __init__(self, audio_path: str, tts_model_name: str):
                 self.audio_name = audio_path
                 self.verbose = True
                 self.seed = 42
+                self.tts_model_name = tts_model_name
         
-        args = Args(audio_filepath)
+        args = Args(audio_filepath, tts_model)
         
         # Run the full pipeline
         final_audio, save_path = cmd_read_audio(args)
@@ -133,6 +132,8 @@ def main():
         st.session_state.status_message = ""
     if "processing" not in st.session_state:
         st.session_state.processing = False
+    if "tts_model" not in st.session_state:
+        st.session_state.tts_model = "kokoro"
     
     # Two-column layout
     col_input, col_output = st.columns(2)
@@ -222,6 +223,18 @@ def main():
         
         st.divider()
         
+        # --- TTS MODEL SELECTION ---
+        st.markdown("**🎵 Select TTS Model:**")
+        st.session_state.tts_model = st.selectbox(
+            "TTS Model",
+            options=["kokoro", "qwen3"],
+            index=0 if st.session_state.tts_model == "kokoro" else 1,
+            help="Choose the Text-to-Speech model for audio generation",
+            label_visibility="collapsed"
+        )
+        
+        st.divider()
+        
         # --- PROCESS BUTTON ---
         process_disabled = st.session_state.audio_path is None
         
@@ -255,9 +268,10 @@ def main():
             with st.spinner("🔄 Processing audio through pipeline..."):
                 st.info("**Step 1/3:** Whisper transcription...")
                 st.info("**Step 2/3:** RAG response generation...")
-                st.info("**Step 3/3:** Kokoro audio synthesis...")
+                tts_name = "Kokoro" if st.session_state.tts_model == "kokoro" else "Qwen3"
+                st.info(f"**Step 3/3:** {tts_name} audio synthesis...")
                 
-                output_path, status = process_audio(st.session_state.audio_path)
+                output_path, status = process_audio(st.session_state.audio_path, st.session_state.tts_model)
                 
                 st.session_state.output_audio_path = output_path
                 st.session_state.status_message = status
@@ -293,7 +307,8 @@ def main():
         **Audio Input Directory:** `{AUDIO_INPUT_DIR}`  
         **Output Directory:** `{OUTPUT_DIR}`  
         **Selected Audio:** `{st.session_state.audio_path or 'None'}`  
-        **Output Audio:** `{st.session_state.output_audio_path or 'None'}`
+        **Output Audio:** `{st.session_state.output_audio_path or 'None'}`  
+        **TTS Model:** `{st.session_state.tts_model}`
         """)
 
 

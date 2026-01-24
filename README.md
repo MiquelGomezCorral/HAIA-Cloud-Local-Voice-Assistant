@@ -51,6 +51,58 @@ python -m ipykernel install --user --name=venv --display-name "Python (venv)"
 ### Dataset Source
 Link: Insert Link Here
 
+### TTS Models
+
+This project supports multiple Text-to-Speech models:
+
+#### Qwen3-TTS
+
+[Qwen3-TTS](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice) is a powerful multilingual TTS model supporting 10 languages (Chinese, English, Japanese, Korean, German, French, Russian, Portuguese, Spanish, and Italian).
+
+**Additional System Dependencies:**
+```bash
+# Install SoX (required for audio processing)
+sudo apt install sox -y
+```
+
+**Python Dependencies:**
+```bash
+# Install qwen-tts package (requires transformers==4.57.3)
+pip install qwen-tts
+
+# Ensure correct transformers version
+pip install transformers==4.57.3
+
+# Optional: Install flash-attn for faster inference
+pip install flash-attn --no-build-isolation
+```
+
+**Usage:**
+```bash
+python main.py quen3 -t "Hello, this is a test."
+```
+
+### Web Application
+To run the interactive web interface (Streamlit):
+
+```bash
+cd app
+streamlit run app.py
+```
+
+**Available Speakers:**
+| Speaker | Description | Native Language |
+|---------|-------------|-----------------|
+| Vivian | Bright, slightly edgy young female voice | Chinese |
+| Serena | Warm, gentle young female voice | Chinese |
+| Uncle_Fu | Seasoned male voice with low, mellow timbre | Chinese |
+| Dylan | Youthful Beijing male voice | Chinese (Beijing) |
+| Eric | Lively Chengdu male voice | Chinese (Sichuan) |
+| Ryan | Dynamic male voice with strong rhythm | English |
+| Aiden | Sunny American male voice | English |
+| Ono_Anna | Playful Japanese female voice | Japanese |
+| Sohee | Warm Korean female voice | Korean |
+
 *Maintained by [MiquelGomezCorral](https://miquelgc.net)*
 
 <a name="español"></a>
@@ -97,8 +149,59 @@ uv pip install -r requirements.txt
 pip install ipykernel
 python -m ipykernel install --user --name=venv --display-name "Python (venv)"
 ```
+### Aplicación Web
+Para ejecutar la interfaz web interactiva (Streamlit):
+
+```bash
+cd app
+streamlit run app.py
+```
+
 ### Fuente dataset
 Link: Añade aquí el link a tu dataset
 
+### Modelos TTS
+
+Este proyecto soporta múltiples modelos de Text-to-Speech:
+
+#### Qwen3-TTS
+
+[Qwen3-TTS](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice) es un potente modelo TTS multilingüe que soporta 10 idiomas (Chino, Inglés, Japonés, Coreano, Alemán, Francés, Ruso, Portugués, Español e Italiano).
+
+**Dependencias del Sistema Adicionales:**
+```bash
+# Instalar SoX (requerido para procesamiento de audio)
+sudo apt install sox -y
+```
+
+**Dependencias de Python:**
+```bash
+# Instalar el paquete qwen-tts (requiere transformers==4.57.3)
+pip install qwen-tts
+
+# Asegurar la versión correcta de transformers
+pip install transformers==4.57.3
+
+# Opcional: Instalar flash-attn para inferencia más rápida
+pip install flash-attn --no-build-isolation
+```
+
+**Uso:**
+```bash
+python main.py quen3 -t "Hola, esto es una prueba."
+```
+
+**Voces Disponibles:**
+| Voz | Descripción | Idioma Nativo |
+|-----|-------------|---------------|
+| Vivian | Voz femenina joven brillante | Chino |
+| Serena | Voz femenina joven cálida y suave | Chino |
+| Uncle_Fu | Voz masculina madura con timbre grave | Chino |
+| Dylan | Voz masculina juvenil de Beijing | Chino (Beijing) |
+| Eric | Voz masculina animada de Chengdu | Chino (Sichuan) |
+| Ryan | Voz masculina dinámica con ritmo fuerte | Inglés |
+| Aiden | Voz masculina americana soleada | Inglés |
+| Ono_Anna | Voz femenina japonesa juguetona | Japonés |
+| Sohee | Voz femenina coreana cálida | Coreano |
 
 *Matenido por [MiquelGomezCorral](https://miquelgc.net)*

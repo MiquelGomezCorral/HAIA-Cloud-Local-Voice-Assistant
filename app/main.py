@@ -7,13 +7,16 @@ from maikol_utils.other_utils import args_to_dataclass
 from maikol_utils.print_utils import print_separator, print_color
 
 from src.config import Configuration
-from src.models import whisper_transcribe, kokoro_generate_audio, ask_rag
+from src.models import whisper_transcribe, kokoro_generate_audio, ask_rag, qwen3_generate_audio
 
 def cmd_read_audio(args: argparse.Namespace):
     """Call read_extract_from_config_list with the given args."""
     CONFIG: Configuration = args_to_dataclass(args, Configuration)
     
     print_separator("FULL PIPELINE STARTED", sep_type="START")
+    # ======================================================================================
+    #                                       WHISPER
+    # ======================================================================================
     print_separator("WHISPER", sep_type="LONG")
     transcripcion = whisper_transcribe(CONFIG)
     if CONFIG.verbose:
@@ -21,6 +24,9 @@ def cmd_read_audio(args: argparse.Namespace):
         print_separator("Wihsper trascription")
         print_color(transcripcion, color="green")
         
+    # ======================================================================================
+    #                                       RAG
+    # ======================================================================================
     print_separator("RAG", sep_type="LONG")
     rag_response = ask_rag(transcripcion, CONFIG)
 
@@ -28,8 +34,18 @@ def cmd_read_audio(args: argparse.Namespace):
         print_separator("RAG response")
         print_color(rag_response, color="green")
 
-    print_separator("KOKORO", sep_type="LONG")
-    final_audio, save_path = kokoro_generate_audio(rag_response, CONFIG)
+    # ======================================================================================
+    #                                       TTS
+    # ======================================================================================
+    if CONFIG.tts_model_name == "qwen3":
+        print_separator("QWEN3 TTS", sep_type="LONG")
+        final_audio, save_path = qwen3_generate_audio(rag_response, CONFIG)
+    elif CONFIG.tts_model_name == "kokoro":
+        print_separator("KOKORO", sep_type="LONG")
+        final_audio, save_path = kokoro_generate_audio(rag_response, CONFIG)
+    else:
+        raise ValueError(f"Unknown TTS model name: {CONFIG.tts_model_name}")
+    
     print_separator("FULL PIPELINE ENDED", sep_type="START")
     
     return final_audio, save_path
@@ -57,11 +73,11 @@ def cmd_kokoro(args: argparse.Namespace):
     kokoro_generate_audio(args.text, CONFIG)
     print_separator("KOKORO ENDED", sep_type="START")
 
-def cmd_quen3(args: argparse.Namespace):
+def cmd_qwen3(args: argparse.Namespace):
     """Call Qwen3 TTS function with the given args."""
     CONFIG: Configuration = args_to_dataclass(args, Configuration)
     print_separator("QWEN3 TTS STARTED", sep_type="START")
-    generate_audio(args.text, CONFIG)
+    qwen3_generate_audio(args.text, CONFIG)
     print_separator("QWEN3 TTS ENDED", sep_type="START")
     
 # ======================================================================================
@@ -113,16 +129,16 @@ if __name__ == "__main__":
     p_kokoro.add_argument(
         "-t", "--text", type=str, required=True, help="Query to ask the Kokoro system"
     )
-    p_kokoro.set_defaults(func=cmd_kokoro)
+    p_kokoro.set_defaults(func=cmd_kokoro, tts_model_name="kokoro")
 
     # ======================================================================================
     #                                       QWEN3 TTS
     # ======================================================================================
-    p_quen3 = subparsers.add_parser("quen3", help="Test script with Qwen3 TTS")
-    p_quen3.add_argument(
+    p_qwen3 = subparsers.add_parser("qwen3", help="Test script with Qwen3 TTS")
+    p_qwen3.add_argument(
         "-t", "--text", type=str, required=True, help="Query to ask the Qwen3 TTS system"
     )
-    p_quen3.set_defaults(func=cmd_quen3)
+    p_qwen3.set_defaults(func=cmd_qwen3, tts_model_name="qwen3")
 
 
     # ======================================================================================
