@@ -213,7 +213,7 @@ def main():
         st.divider()
         
         # ========================= TTS MODEL SELECTION =========================
-        st.markdown("**🎵 Select TTS Model:**")
+        st.markdown("**🎵 Select TTS Model (Kokoro for fast answer, Qwen3 for better quality answer):**")
         st.session_state.tts_model = st.selectbox(
             "TTS Model",
             options=["kokoro", "qwen3"],

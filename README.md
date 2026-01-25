@@ -31,6 +31,15 @@ uv pip install -r requirements.txt
 pip install ipykernel
 python -m ipykernel install --user --name=venv --display-name "Python (venv)"
 ```
+
+## RAG Web Results
+
+To use the Tavily web information retrieval service, you must add your TAVILY_API_KEY to the .env file. Without this environment variable set, the service will not be able to authenticate or function correctly.
+
+```bash
+TAVILY_API_KEY="YOUR_API_KEY"
+```
+
 ## TTS Models
 
 This project supports multiple Text-to-Speech models:
@@ -117,6 +126,14 @@ Para ejecutar la interfaz web interactiva (Streamlit):
 ```bash
 cd app
 streamlit run app.py
+```
+
+## Resultados Web RAG
+
+Para utilizar el servicio de obtención de información web de Tavily, debes añadir tu TAVILY_API_KEY en el archivo .env. Si esta variable de entorno no está configurada, el servicio no podrá autenticarse ni funcionar correctamente.
+
+```bash
+TAVILY_API_KEY="YOUR_API_KEY"
 ```
 
 ## Modelos TTS

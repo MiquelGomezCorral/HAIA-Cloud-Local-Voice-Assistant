@@ -84,10 +84,10 @@ def ask_rag(transcription:str, CONFIG:Configuration) -> str:
         fuente_info = "fuentes externas en internet"
 
     system_prompt = (
-        "Eres un asistente de investigación. Responde de forma natural y fluida. "
+        "Eres un asistente de investigación. Responde de forma natural, fluida y concisa, no des detalles innecesarios y ves directamente al grano. Si breve, no uses más de 100 palabras. "
         f"La información proviene de {fuente_info}. "
         "IMPORTANTE: No uses negritas, ni asteriscos, ni listas, ni ningún formato markdown. "
-        "Escribe todo en un párrafo o párrafos de texto plano, como si fuera una carta o un mensaje de voz."
+        "Escribe todo en un párrafo o párrafos de texto plano, como si fuera una carta o un mensaje de voz. Independientemente del lenguaje de la pregunta, responde SIEMPRE en Español. "
         "\n\nContexto: {context}"
     )
 

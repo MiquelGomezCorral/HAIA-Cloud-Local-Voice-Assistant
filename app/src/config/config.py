@@ -35,7 +35,7 @@ class Configuration:
     kokoro_play_speed: float = 1.0
 
     qwen3_language: str = "Auto"
-    qwen3_speaker: str = "Ryan"
+    qwen3_speaker: str = "Aiden"
     qwen3_pretrained_model_name_or_path : str = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
 
     verbose: bool = True
