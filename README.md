@@ -1,5 +1,15 @@
 # General Python Project Template
 
+# Showcase Video
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=qFbEtfm45SM">
+    <img src="https://img.youtube.com/vi/qFbEtfm45SM/0.jpg" alt="YouTube Video">
+  </a>
+  <br>
+  <em>Click the image to watch the video</em>
+</div>
+
+
 [English](#english) | [Español](#español)
 
 ---
