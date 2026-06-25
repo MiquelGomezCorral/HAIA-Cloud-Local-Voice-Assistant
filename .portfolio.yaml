@@ -18,6 +18,9 @@ screenShoots:
   - readme_images/architecture_local.png
   - readme_images/results.png
   - readme_images/thumbnail.webp
+date:
+  en: Jan 2026
+  es: Ene 2026
 keywords:
   en: [voice assistant, speech to text, text to speech, TTS, Qwen3-TTS, RAG, Tavily, voice question, local AI, Streamlit, conversational AI, audio processing, multilingual TTS, Whisper]
   es: [asistente de voz, voz a texto, texto a voz, TTS, Qwen3-TTS, RAG, Tavily, pregunta por voz, IA local, Streamlit, IA conversacional, procesamiento de audio, TTS multilingüe, Whisper]
@@ -25,4 +28,5 @@ slug: HAIA-Cloud-Local-Voice-Assistant
 youtube: qFbEtfm45SM
 order: 90
 featured: false
+
 
