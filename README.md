@@ -21,7 +21,7 @@ This repository contains the source code that allows a voice asistan to receive 
 
 This is the structure that this system follows:
 
-![schema](readme_images/schema.png)
+![schema](readme_images/architecture_local_169.png)
 
 ### Setup & Installation
 Run the following commands to create your local environment and install dependencies:
@@ -109,7 +109,7 @@ Este repositorio contiene el código fuente que permite a un asistente de voz re
 
 Esta es la estructura que sigue este sistema:
 
-![schema](readme_images/schema.png)
+![schema](readme_images/architecture_local_169.png)
 
 
 ### Configuración e Instalación

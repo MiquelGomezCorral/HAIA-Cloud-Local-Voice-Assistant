@@ -12,12 +12,12 @@ descriptionLong:
     Pipeline completo de asistente de voz: Speech-to-Text (Whisper) → Procesamiento de Texto → Recuperación de Información (base de conocimiento local o Tavily web RAG) → Text-to-Speech (Qwen3-TTS 1.7B con selección de voz personalizada). El motor TTS soporta 10 idiomas (Chino, Inglés, Japonés, Coreano, Alemán, Francés, Ruso, Portugués, Español, Italiano) con 9 personalidades de voz diferentes. Funciona tanto como herramienta CLI como aplicación web interactiva con Streamlit. Requiere SoX para procesamiento de audio. Arquitectura modular con instalación pip editable.
 technologies: [ai, huggingface, jupyter, langchain, numpy, python, pytorch, rag]
 tags: [class]
-logo: readme_images/thumbnail.webp
+logo: readme_images/thumbnail_169.webp
 screenShoots:
-  - readme_images/architecture_cloud.png
-  - readme_images/architecture_local.png
-  - readme_images/results.png
-  - readme_images/thumbnail.webp
+  - readme_images/architecture_cloud_169.png
+  - readme_images/architecture_local_169.png
+  - readme_images/results_169.png
+  - readme_images/thumbnail_169.webp
 date:
   en: Jan 2026
   es: Ene 2026
@@ -28,7 +28,6 @@ slug: HAIA-Cloud-Local-Voice-Assistant
 youtube: qFbEtfm45SM
 relevancy: 72
 featured: false
-
 
 
 
