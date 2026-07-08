@@ -197,3 +197,16 @@ streamlit run app.py
 | Sohee | Voz femenina coreana cálida | Coreano |
 
 *Matenido por [MiquelGomezCorral](https://miquelgc.net)*
+
+---
+
+<!-- portfolio-gallery:start -->
+## Gallery
+
+<p align="center">
+  <img src="readme_images/thumbnail_169.webp" alt="thumbnail" width="48%" />
+  <img src="readme_images/architecture_cloud_169.png" alt="architecture cloud" width="48%" />
+  <img src="readme_images/architecture_local_169.png" alt="architecture local" width="48%" />
+  <img src="readme_images/results_169.png" alt="results" width="48%" />
+</p>
+<!-- portfolio-gallery:end -->
